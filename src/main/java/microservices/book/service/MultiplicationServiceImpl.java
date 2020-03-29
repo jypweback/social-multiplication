@@ -3,13 +3,22 @@ package microservices.book.service;
 import lombok.RequiredArgsConstructor;
 import microservices.book.domain.Multiplication;
 import microservices.book.domain.MultiplicationResultAttempt;
+import microservices.book.domain.User;
+import microservices.book.repository.MultiplicationResultAttemptRepository;
+import microservices.book.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
+
+import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
 public class MultiplicationServiceImpl implements MultiplicationService {
 
     private final RandomGeneratorService randomGeneratorService;
+    private final MultiplicationResultAttemptRepository attemptRepository;
+    private final UserRepository userRepository;
 
     @Override
     public Multiplication createRandomMultiplication() {
@@ -19,7 +28,32 @@ public class MultiplicationServiceImpl implements MultiplicationService {
     }
 
     @Override
-    public boolean checkAttempt(MultiplicationResultAttempt resultAttempt) {
-        return resultAttempt.getResultAttempt() == (resultAttempt.getMultiplication().getFactorA() * resultAttempt.getMultiplication().getFactorB());
+    public boolean checkAttempt(final MultiplicationResultAttempt resultAttempt) {
+
+        // 사용자 존재유무 확인
+        Optional<User> user = userRepository.findByAlias(resultAttempt.getUser().getAlias());
+
+        Assert.isTrue(!resultAttempt.isCorrect(), "채점한 상태로 보낼 수 없습니다!!");
+
+        // 답안 채점
+        boolean isCorrect = resultAttempt.getResultAttempt() ==
+                (resultAttempt.getMultiplication().getFactorA() *
+                        resultAttempt.getMultiplication().getFactorB());
+
+        MultiplicationResultAttempt checkedAtempt = new MultiplicationResultAttempt(
+                user.orElse(resultAttempt.getUser()),
+                resultAttempt.getMultiplication(),
+                resultAttempt.getResultAttempt(),
+                isCorrect
+        );
+
+        attemptRepository.save(checkedAtempt);
+
+        return isCorrect;
+    }
+
+    @Override
+    public List<MultiplicationResultAttempt> getStatsForUser(String userAlias) {
+        return attemptRepository.findTop5ByUserAliasOrderByIdDesc(userAlias);
     }
 }

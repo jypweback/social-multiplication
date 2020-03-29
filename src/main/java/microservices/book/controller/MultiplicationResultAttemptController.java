@@ -6,10 +6,10 @@ import lombok.RequiredArgsConstructor;
 import microservices.book.domain.MultiplicationResultAttempt;
 import microservices.book.service.MultiplicationService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import javax.xml.ws.Response;
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -19,15 +19,28 @@ public class MultiplicationResultAttemptController {
     private final MultiplicationService multiplicationService;
 
     @PostMapping
-    ResponseEntity<ResultResponse> postResult(@RequestBody MultiplicationResultAttempt multiplicationResultAttempt){
-        return ResponseEntity.ok(new ResultResponse(multiplicationService.checkAttempt(multiplicationResultAttempt)));
+    ResponseEntity<MultiplicationResultAttempt> postResult(@RequestBody MultiplicationResultAttempt multiplicationResultAttempt) {
+
+        boolean correct = multiplicationService.checkAttempt(multiplicationResultAttempt);
+        MultiplicationResultAttempt attempt = new MultiplicationResultAttempt(
+                multiplicationResultAttempt.getUser(),
+                multiplicationResultAttempt.getMultiplication(),
+                multiplicationResultAttempt.getResultAttempt(),
+                correct);
+
+        return ResponseEntity.ok(attempt);
     }
 
-    @RequiredArgsConstructor
-    @NoArgsConstructor(force = true)
-    @Getter
-    static final class ResultResponse{
-        private final boolean correct;
+    @GetMapping
+    ResponseEntity<List<MultiplicationResultAttempt>> getStatistics(@RequestParam("alias") String alias) {
+        return ResponseEntity.ok(multiplicationService.getStatsForUser(alias));
     }
+
+//    @RequiredArgsConstructor
+//    @NoArgsConstructor(force = true)
+//    @Getter
+//    static final class ResultResponse{
+//        private final boolean correct;
+//    }
 
 }
