@@ -3,7 +3,9 @@ package microservices.book.service;
 import lombok.RequiredArgsConstructor;
 import microservices.book.domain.Multiplication;
 import microservices.book.domain.MultiplicationResultAttempt;
+import microservices.book.domain.MultiplicationSolvedEvent;
 import microservices.book.domain.User;
+import microservices.book.event.EventDispatcher;
 import microservices.book.repository.MultiplicationResultAttemptRepository;
 import microservices.book.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ public class MultiplicationServiceImpl implements MultiplicationService {
     private final RandomGeneratorService randomGeneratorService;
     private final MultiplicationResultAttemptRepository attemptRepository;
     private final UserRepository userRepository;
+    private final EventDispatcher eventDispatcher;
 
     @Override
     public Multiplication createRandomMultiplication() {
@@ -48,6 +51,13 @@ public class MultiplicationServiceImpl implements MultiplicationService {
         );
 
         attemptRepository.save(checkedAtempt);
+
+        // 이벤트로 결과를 전송
+        eventDispatcher.send(new MultiplicationSolvedEvent(
+                checkedAtempt.getId(),
+                checkedAtempt.getUser().getId(),
+                checkedAtempt.isCorrect())
+        );
 
         return isCorrect;
     }
