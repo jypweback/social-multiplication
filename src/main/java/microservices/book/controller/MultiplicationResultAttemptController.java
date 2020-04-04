@@ -1,14 +1,11 @@
 package microservices.book.controller;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import microservices.book.domain.MultiplicationResultAttempt;
 import microservices.book.service.MultiplicationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.xml.ws.Response;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -34,6 +31,11 @@ public class MultiplicationResultAttemptController {
     @GetMapping
     ResponseEntity<List<MultiplicationResultAttempt>> getStatistics(@RequestParam("alias") String alias) {
         return ResponseEntity.ok(multiplicationService.getStatsForUser(alias));
+    }
+
+    @GetMapping("/{resultId}")
+    ResponseEntity<MultiplicationResultAttempt> getResultById(final @PathVariable("resultId") Long resultId){
+        return ResponseEntity.ok(multiplicationService.getResultById(resultId));
     }
 
 //    @RequiredArgsConstructor
